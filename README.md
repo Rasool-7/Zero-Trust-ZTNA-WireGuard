@@ -168,11 +168,6 @@ Feel free to fork and improve.
 
 ---
 
-## 👨‍💻 Author
-
-Your Name  
-Cybersecurity Researcher  
-Zero Trust Architecture Implementation Project  
 
 ---
 
