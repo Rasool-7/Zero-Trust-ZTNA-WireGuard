@@ -1,90 +1,179 @@
-# 🔐 Zero Trust Network Access (ZTNA) Prototype  
-
-A prototype implementation of **Zero Trust Network Access** using open-source tools:  
-- **Keycloak** → Identity & Access Management (IAM)  
-- **Flask** → Access Gateway + Policy Enforcement  
-- **WireGuard** → Encrypted VPN tunnel provider  
-- **iptables** → Role-based firewall enforcement  
+# 🔐 Zero Trust Network Access (ZTNA) Implementation Using Open-Source Tools
 
 ---
 
-## 📂 Project Structure
-```
-.
-├── app4.py           # Flask Access Gateway
-├── peer.json         # Peer database (dynamic WireGuard clients)
-├── wg0.conf          # WireGuard base server configuration
-├── firewall.sh       # Role-based firewall rules
-└── README.md         # Project documentation
-```
+## 📌 Overview
+
+This project implements a **Zero Trust Network Access (ZTNA)** architecture using fully open-source technologies.  
+The system follows the principle of *“Never Trust, Always Verify”* by enforcing strict identity validation, role-based access control, and continuous session monitoring.
 
 ---
 
-## ⚙️ Requirements
-- Python 3.9+  
-- Flask  
-- requests  
-- PyJWT  
-- WireGuard installed on the gateway VM  
-- Keycloak running on a separate VM  
+## 🛠 Technologies Used
 
-Install Python dependencies:  
-```bash
-pip install flask requests pyjwt
-```
+- **Keycloak** – Identity & Access Management (IAM)
+- **WireGuard** – Secure VPN tunnel
+- **Flask** – Access Gateway / Policy Enforcement Point (PEP)
+- **VMware** – Virtual lab environment
+- **Google Authenticator** – Multi-Factor Authentication (MFA)
 
 ---
 
-## 🚀 Setup & Run
+## 🎯 Security Objectives
 
-### 1. Keycloak (Authentication Server)
-- Create a **Realm**: `Company`  
-- Add a **Client**: `vpn-access-client` (confidential, OIDC enabled)  
-- Configure redirect URI → `http://<flask_vm_ip>:5000/callback`  
-- Create **roles**: `admin`, `developer`, `guest`  
-- Assign roles to users and enable **MFA (TOTP)**  
+This implementation enforces:
 
-### 2. WireGuard (VPN Server)
-- Configure `wg0.conf` with server private/public keys  
-- Enable IP forwarding and NAT:  
-  ```bash
-  sysctl -w net.ipv4.ip_forward=1
-  ```
-- Start service:  
-  ```bash
-  wg-quick up wg0
-  ```
+- Continuous authentication
+- Role-Based Access Control (RBAC)
+- Dynamic WireGuard peer provisioning
+- Session-based access revocation
+- Least-privilege network segmentation
+- Token expiration enforcement
 
-### 3. Flask Access Gateway
-- Update **Keycloak URLs, client_id, and secret** inside `app4.py`  
-- Run Flask:  
-  ```bash
-  python3 app4.py
-  ```
-- Routes:  
-  - `/login` → Redirects to Keycloak  
-  - `/callback` → Handles token exchange  
-  - `/download-config` → Generates WireGuard config  
-  - `/logout` → Revokes peer + session  
+---
 
-### 4. Firewall Enforcement
-Apply role-based rules with:  
-```bash
-sudo bash firewall.sh
+## 🏗 Architecture
+
+> Replace the placeholder below with your architecture diagram image if available.
+
+```text
+                 ┌──────────────────────┐
+                 │        User          │
+                 └──────────┬───────────┘
+                            │
+                            ▼
+                 ┌──────────────────────┐
+                 │     Keycloak (IAM)   │
+                 │   OAuth2 + OIDC + MFA│
+                 └──────────┬───────────┘
+                            │  JWT Token
+                            ▼
+                 ┌──────────────────────┐
+                 │     Flask Gateway    │
+                 │ Token Validation     │
+                 │ Role Verification    │
+                 └──────────┬───────────┘
+                            │
+                            ▼
+                 ┌──────────────────────┐
+                 │    WireGuard Server  │
+                 │ Dynamic Peer Config  │
+                 └──────────┬───────────┘
+                            │
+                            ▼
+                 ┌──────────────────────┐
+                 │  Protected Resources │
+                 └──────────────────────┘
 ```
 
 ---
 
-## 🧪 Tests
-- ✅ Login with MFA → config generated  
-- ✅ Session timeout (e.g., 3 min) → peer removed  
-- ✅ Replay attack with expired token → rejected  
-- ✅ Direct connection attempt to WireGuard bypassing Flask → denied  
-- ✅ Brute force on credentials → blocked by MFA  
+## 🔁 Workflow
+
+1. User authenticates via **Keycloak**.
+2. Keycloak issues a signed **JWT token**.
+3. Flask Gateway validates the JWT signature and claims.
+4. If valid, a WireGuard peer configuration is dynamically generated.
+5. A role-based IP address is assigned.
+6. Firewall (`iptables`) rules enforce resource-level access.
+7. When the token expires, the peer is automatically disabled.
+8. Re-authentication is required to regain access.
 
 ---
 
-## 📌 Notes
-- Access tokens are short-lived → Flask refreshes them automatically.  
-- Refresh tokens expire based on Keycloak session lifetime.  
-- All user traffic is forced through WireGuard → no direct access to resources.  
+## 🔒 Security Features
+
+- OAuth2 + OpenID Connect (OIDC)
+- Signed JWT validation
+- Multi-Factor Authentication (TOTP)
+- Role-based IP binding
+- `iptables` network enforcement
+- Continuous authentication checks
+- Automatic session expiration & peer revocation
+- Least-privilege access model
+
+---
+
+## 🧪 Testing & Validation
+
+The system was tested for:
+
+- Role isolation verification
+- Unauthorized lateral movement prevention
+- Token expiration enforcement
+- Mandatory re-authentication
+- Proper peer revocation
+- Network segmentation integrity
+
+---
+
+## 📊 Zero Trust Principles Applied
+
+| Principle | Implementation |
+|------------|----------------|
+| Verify Explicitly | OAuth2 + MFA via Keycloak |
+| Least Privilege | Role-based IP assignment |
+| Assume Breach | Network segmentation + firewall enforcement |
+| Continuous Validation | Token expiration & peer revocation |
+
+---
+
+## 📚 Related Work
+
+This implementation is inspired by:
+
+- **NIST SP 800-207 – Zero Trust Architecture**
+- Zero Trust VPN (ZT-VPN) framework
+- WireGuard vs OpenVPN performance comparison studies
+
+---
+
+## 🚀 Future Improvements
+
+- Device posture validation
+- Hardware-based authentication (FIDO2)
+- Automated certificate/key rotation
+- SIEM integration for logging & monitoring
+- Kubernetes-based deployment
+- Policy engine enhancement (OPA integration)
+
+---
+
+## 📂 Project Structure (Example)
+
+```text
+/ztna-project
+│
+├── flask-gateway/
+│   ├── app.py
+│   ├── auth.py
+│   └── peer_manager.py
+│
+├── wireguard/
+│   ├── wg0.conf
+│   └── peer_templates/
+│
+├── keycloak/
+│   └── realm-config.json
+│
+└── README.md
+```
+
+---
+
+## 📄 License
+
+This project is developed for **educational and research purposes**.  
+Feel free to fork and improve.
+
+---
+
+## 👨‍💻 Author
+
+Your Name  
+Cybersecurity Researcher  
+Zero Trust Architecture Implementation Project  
+
+---
+
+⭐ If you found this project useful, consider giving it a star!
